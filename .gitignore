@@ -5,3 +5,6 @@ __pycache__/
 submission.zip
 backend/
 recently_played_30_male_json/
+.pytest_cache/
+cleaned_matches.csv
+cleaned_deliveries.csv

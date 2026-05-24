@@ -105,6 +105,14 @@ Open **http://localhost:8501** in your browser.
 
 > The app caches the CSVs in memory for 1 hour (`@st.cache_data(ttl=3600)`). Pass `--server.port 8502` if 8501 is in use.
 
+### 5. Run unit tests *(optional)*
+
+```bash
+python -m pytest tests/ -v
+```
+
+25 tests covering the ingestion pipeline, team normalisation, and analytics functions. All should pass.
+
 ---
 
 ## Project structure
