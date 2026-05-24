@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-# --- Page Configuration & Theming ---
+# --- Page Configuration & Theming (v2.0 - Real Cricsheet Data) ---
 st.set_page_config(
     page_title="IPL Analytics Dashboard", 
     page_icon="🏏",
