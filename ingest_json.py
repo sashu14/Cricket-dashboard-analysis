@@ -254,5 +254,5 @@ def ingest(zip_path: str, output_dir: str = ".") -> tuple[pd.DataFrame, pd.DataF
 
 if __name__ == "__main__":
     import sys
-    zip_file = sys.argv[1] if len(sys.argv) > 1 else "frontend/ipl_male_json.zip"
+    zip_file = sys.argv[1] if len(sys.argv) > 1 else "ipl_male_json.zip"
     ingest(zip_file, output_dir=".")

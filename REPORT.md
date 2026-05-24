@@ -246,3 +246,30 @@ The Streamlit Community Cloud deployment (live demo URL) is free under Streamlit
 This project is released under the **MIT Licence**.
 
 All runtime dependencies (Streamlit: Apache 2.0, Plotly: MIT, Pandas: BSD-3-Clause, NumPy: BSD-3-Clause) use permissive open-source licences. MIT is compatible with all of these — it imposes no copyleft obligations, allows commercial use, and permits modification and redistribution with attribution. No GPL or LGPL dependencies are present.
+
+---
+
+## 9. Use of AI Tools
+
+AI assistance was used during the development of this project and is disclosed here in full, as required by the assignment instructions.
+
+**Tool used:** Antigravity (Google DeepMind) — an AI coding assistant.
+
+**How it was used:**
+
+| Area | AI involvement |
+|---|---|
+| **Boilerplate scaffolding** | Initial file structure and Streamlit layout were drafted with AI assistance, then reviewed and modified |
+| **Plotly chart templates** | Chart configurations (sunburst, scatter, grouped bar) were co-authored with AI and tuned manually |
+| **Unit test structure** | Test class structure and fixture helpers were co-authored with AI assistance |
+| **Documentation** | First drafts of README.md and REPORT.md were generated with AI assistance; all analytical content was verified against actual data outputs |
+| **Debugging** | AI helped identify edge cases in JSON parsing (season string normalisation, missing `overs` key) |
+
+**What was done independently:**
+
+- All analytical decisions — metric choices, filter thresholds, chart type selection — were made by the author and validated against the real dataset
+- The fault tolerance strategy (`_safe_get`, per-file isolation, type coercion) was designed and verified independently
+- All leaderboard figures (V Kohli 9,213 runs, YS Chahal 240 wickets, etc.) were computed by running the pipeline against the actual Cricsheet dataset and verified manually
+- All code was read, understood, and tested before submission — no code was accepted without comprehension
+
+AI tools were used as a productivity accelerator, not as a replacement for understanding. The author takes full responsibility for the correctness and design of the submitted work.
