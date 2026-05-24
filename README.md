@@ -1,102 +1,168 @@
 # IPL Analytics Dashboard 🏏
 
-An end-to-end, fault-tolerant analytics dashboard for the Indian Premier League built on the official [Cricsheet](https://cricsheet.org/) IPL dataset. The pipeline ingests 1,235 real match JSON files, transforms them into clean tabular data, and serves 6 interactive visualizations via Streamlit.
+> **Live demo:** https://cricket-dashboard-analysis-9m4vmw4u7g4tkqtuvzpfas.streamlit.app/
+
+An end-to-end, fault-tolerant analytics dashboard for the Indian Premier League built entirely on the official [Cricsheet](https://cricsheet.org/) IPL JSON dataset. A single ingestion pipeline reads 1,235 match files directly from a zip archive, transforms them into clean tabular CSVs, and feeds six interactive Plotly visualisations served by Streamlit.
 
 ---
 
-## 🌟 Features
-
-- **Real Cricsheet Data** — 1,235 IPL matches (2007–2026), 293,764 ball-by-ball deliveries, 18 seasons, 19 teams
-- **Fault-Tolerant JSON Pipeline** — handles malformed JSON, missing fields, type errors, and empty files without crashing
-- **Schema-Agnostic Design** — no hardcoded team/player/venue names; all entities extracted dynamically
-- **6 Interactive Visualizations** — win rates, toss impact, venue heatmap, batsman scatter, bowler scatter, seasonal trends
-- **Global Filters** — sidebar filters for Season, Team, and Venue update all charts reactively
+## Table of Contents
+1. [Features](#features)
+2. [Dataset — download & placement](#dataset--download--placement)
+3. [Quick start](#quick-start)
+4. [Project structure](#project-structure)
+5. [Visualisations](#visualisations)
+6. [Fault tolerance](#fault-tolerance)
+7. [Dependencies & licences](#dependencies--licences)
 
 ---
 
-## 📊 Dataset
+## Features
 
-| Property | Value |
+| Capability | Detail |
 |---|---|
-| **Source** | [Cricsheet IPL JSON](https://cricsheet.org/downloads/) — `ipl_male_json.zip` |
-| **Format** | Cricsheet JSON (one file per match) |
-| **Matches** | 1,235 |
-| **Deliveries** | 293,764 |
-| **Seasons** | 2007–2026 (18 seasons) |
-| **Teams** | 19 (incl. defunct franchises: Deccan Chargers, Kochi Tuskers, Pune Warriors) |
-| **Wickets recorded** | 14,601 |
-
-> The zip file is not committed to this repository due to its size (~89 MB).
-> Download it from https://cricsheet.org/downloads/ and run `python ingest_json.py` to regenerate the CSVs.
+| **Real IPL data** | 1,235 matches · 293,764 deliveries · 18 seasons (2007–2026) · 19 teams |
+| **Fault-tolerant pipeline** | 0 files skipped across 1,235 JSON inputs; graceful fallback on every edge case |
+| **Schema-agnostic** | No hardcoded team/player/venue names; all entities extracted dynamically |
+| **Interactive filters** | Sidebar multi-selects for Season, Team, and Venue — all six charts update reactively |
+| **6 visualisations** | Win rates · Toss impact · Batsman scatter · Bowler scatter · Venue heatmap · Season trends |
+| **Premium UI** | Custom dark-mode theme, neon colour palette, animated KPI cards via Streamlit + Plotly |
 
 ---
 
-## 🛠 Tech Stack
+## Dataset — download & placement
 
-| Layer | Technology |
-|---|---|
-| Dashboard | Python 3.8+, Streamlit |
-| Visualizations | Plotly (interactive charts) |
-| Data Processing | Pandas, NumPy |
-| Ingestion Pipeline | Python `zipfile`, `json`, `logging` |
+> ⚠️ **Data is not bundled in this archive** (submission size limit). Follow these steps exactly.
+
+### Step 1 — Download
+
+Go to **https://cricsheet.org/downloads/** and download:
+
+```
+ipl_male_json.zip   (~89 MB)
+```
+
+Direct URL: `https://cricsheet.org/downloads/ipl_male_json.zip`
+
+### Step 2 — Place the file
+
+Copy the downloaded zip into the **project root** (the same folder as `app.py`):
+
+```
+Cricket-dashboard-analysis/
+├── app.py
+├── ingest_json.py
+├── ipl_male_json.zip   ← place it here
+├── pipeline.py
+└── ...
+```
+
+### Step 3 — Run ingestion
+
+```bash
+python ingest_json.py ipl_male_json.zip
+```
+
+This creates two files in the project root:
+- `cleaned_matches.csv` — one row per match (1,235 rows)
+- `cleaned_deliveries.csv` — one row per delivery (293,764 rows)
+
+Ingestion completes in **under 5 seconds** on a standard laptop.
 
 ---
 
-## 🛡️ Fault Tolerance
+## Quick start
 
-| Scenario | Handling |
-|---|---|
-| Missing JSON file | Logged, skipped — pipeline continues |
-| Invalid JSON (decode error) | Caught via `json.JSONDecodeError`, file skipped |
-| Missing `winner` / outcome fields | Defaults to `"No Result"` via `.get()` |
-| Missing `is_wicket` / wickets data | Dashboard falls back to plotting balls bowled |
-| Malformed numeric fields | `pd.to_numeric(errors='coerce').fillna(0)` |
-| Fully NaN rows | Dropped via `dropna(how='all')` |
-| Division-by-zero (strike rate) | Players with `balls_faced < 50` filtered out |
+### Prerequisites
 
----
+- Python **3.8 or later**
+- pip
 
-## 🚀 Setup & Run
+### 1. Clone the repository
 
-### 1. Install dependencies
+```bash
+git clone https://github.com/sashu14/Cricket-dashboard-analysis.git
+cd Cricket-dashboard-analysis
+```
+
+### 2. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Generate clean data from Cricsheet JSON
-```bash
-# Download ipl_male_json.zip from https://cricsheet.org/downloads/
-# Then run:
-python ingest_json.py ipl_male_json.zip
-```
-This creates `cleaned_matches.csv` and `cleaned_deliveries.csv`.
+### 3. Download data and run ingestion
 
-> **Skip this step** — pre-built CSVs from the real Cricsheet dataset are already committed to this repo.
+Follow the [Dataset section](#dataset--download--placement) above.
 
-### 3. Launch the dashboard
+### 4. Launch the dashboard
+
 ```bash
 streamlit run app.py
 ```
+
 Open **http://localhost:8501** in your browser.
+
+> The app caches the CSVs in memory for 1 hour (`@st.cache_data(ttl=3600)`). Pass `--server.port 8502` if 8501 is in use.
 
 ---
 
-## 📁 Project Structure
+## Project structure
 
 ```
 Cricket-dashboard-analysis/
-├── app.py                  # Streamlit dashboard (6 charts + KPI cards)
-├── ingest_json.py          # Fault-tolerant JSON → CSV pipeline
-├── pipeline.py             # CSV cleaning & validation pipeline
-├── cleaned_matches.csv     # 1,235 real IPL matches (2007–2026)
-├── cleaned_deliveries.csv  # 293,764 real ball-by-ball deliveries
-├── requirements.txt        # Python dependencies
-├── REPORT.md               # Design decisions, adaptations & observations
-└── README.md
+├── app.py                  # Streamlit dashboard — 6 charts + KPI cards + sidebar filters
+├── ingest_json.py          # Fault-tolerant JSON → CSV pipeline (primary, used for real data)
+├── pipeline.py             # CSV cleaning & validation pipeline (secondary, for pre-existing CSVs)
+├── requirements.txt        # Python runtime dependencies
+├── README.md               # This file
+├── REPORT.md               # Design decisions, fault tolerance, observations
+└── LICENSE                 # MIT Licence
 ```
+
+> `cleaned_matches.csv` and `cleaned_deliveries.csv` are generated outputs — not committed to source control.
 
 ---
 
-## 📜 License
+## Visualisations
 
-This project is open-sourced under the MIT License. See `LICENSE` for details.
+| Chart | Type | What it shows |
+|---|---|---|
+| **KPI Cards** | Custom HTML/CSS | Total matches · Top win-rate team · Top run scorer |
+| **Win Rates by Team** | Bar chart | Overall win % per team across selected filters |
+| **Toss Impact Analysis** | Sunburst | Toss decision (bat/field) → match outcome (W/L) |
+| **Batsmen: Strike Rate vs Runs** | Scatter | Volume vs efficiency for players with ≥ 50 balls faced |
+| **Bowlers: Economy vs Wickets** | Scatter | Economy rate vs wickets for bowlers with ≥ 60 balls |
+| **Venue Trends (Bat vs Field)** | Heatmap | Bat-first vs field-first win counts at top 12 venues |
+| **Win Rates Across Seasons** | Line chart | Per-season win % for the top 5 overall teams |
+
+All charts use Plotly — hover for tooltips, click legend to isolate teams, drag to zoom.
+
+---
+
+## Fault tolerance
+
+| Failure scenario | Handling |
+|---|---|
+| Missing zip / source file | Logged via `logging`, empty DataFrame returned — app shows informative error, does not crash |
+| Invalid / corrupt JSON | `json.JSONDecodeError` caught per file; file skipped, pipeline continues |
+| Missing `winner` field | Defaults to `"No Result"` via `.get()`; filtered from win-rate calculations |
+| Missing `wickets` key | `is_wicket` = 0; dashboard falls back to Economy vs Balls Bowled axis |
+| Malformed numeric fields | `pd.to_numeric(errors='coerce').fillna(0)` — strings coerced safely |
+| Fully NaN rows | `dropna(how='all')` applied after ingestion |
+| Division by zero (strike rate) | Players with `balls_faced < 50` excluded from scatter |
+| Division by zero (bowling avg) | Bowling Average abandoned; Economy Rate used instead |
+| Empty dataset after filters | Streamlit `st.stop()` called with informative message |
+
+---
+
+## Dependencies & licences
+
+| Package | Version | Licence |
+|---|---|---|
+| `streamlit` | ≥ 1.30 | Apache 2.0 |
+| `plotly` | ≥ 5.0 | MIT |
+| `pandas` | ≥ 1.5 | BSD-3-Clause |
+| `numpy` | ≥ 1.23 | BSD-3-Clause |
+
+All dependencies use permissive licences compatible with the **MIT Licence** applied to this project. No proprietary or copyleft dependencies are used. No external paid APIs are called — the entire solution runs locally with zero operational cost.
