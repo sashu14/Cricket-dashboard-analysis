@@ -29,31 +29,48 @@ Real-world data is rarely perfect. Here is how we adapted to common data quality
 *   **Sparse Delivery Data (Batsmen)**: Some early season matches might lack ball-by-ball granularity. The scatter plot for batsman stats actively filters out players who have faced very few balls (`balls_faced > 50`) to remove noise and statistical outliers that skew the visualizations.
 *   **Absent or Inconsistent Metrics (Bowlers)**: If specific metrics like `is_wicket` (dismissal data) are completely missing or inconsistently recorded in the dataset, the `app.py` logic adapts dynamically. Instead of plotting Economy vs. Wickets (which would crash or plot zeros), it falls back to plotting Economy vs. Total Balls Bowled, allowing the analysis of bowler efficiency to persist even with degraded data quality.
 
-## 5. Best performing batsmen and bowlers
-*(Derived from `venv/recently_played_30_male_json` dataset analysis)*
+## 5. Best Performing Batsmen and Bowlers
+*(Derived from the full Cricsheet IPL JSON dataset — 1,235 matches, 2007–2026)*
 
-When ranking the best performing batsmen and bowlers across seasons, we rely on core efficiency metrics (Strike Rate, Economy) plotted against volume (Total Runs, Wickets). However, inspecting the raw JSON data structures revealed inconsistencies that required programmatic adaptation:
+When ranking the best performing batsmen and bowlers across seasons, we rely on core efficiency metrics (Strike Rate, Economy) plotted against volume (Total Runs, Wickets). Inspecting the raw JSON data structures revealed inconsistencies that required programmatic adaptation:
+
 *   **Batsmen (Undefined Strike Rates):** Some batters are dismissed (e.g., run out at the non-striker's end) having faced 0 legal deliveries. Attempting to calculate a Strike Rate (`(runs / balls) * 100`) results in `NaN` or `Infinity`.
-    *   *Adaptation:* The dashboard filters out any batsman who hasn't faced a minimum threshold of deliveries (`balls_faced > 50`). This prevents undefined math errors and removes "noise" from the leaderboard, ensuring we only rank established players.
-*   **Bowlers (Missing Bowling Averages & Unrecorded Dismissals):** To rank bowlers, the standard metric is Bowling Average (`runs_conceded / wickets`). However, in several matches within the JSON dataset, bowlers complete their spells with 0 wickets, or the `wickets` array in the JSON is empty due to a lack of dismissals. This makes the average mathematically undefined (`Infinity`). Furthermore, some niche JSON logs omit the `wickets` key entirely for certain overs.
-    *   *Adaptation:* We abandoned Bowling Average as the primary y-axis. Instead, we adapted the visual analysis to use **Economy Rate** (`runs_conceded / overs_bowled`) plotted against **Total Wickets**. In the event the `wickets` metric is entirely absent from a corrupted dataset, the application dynamically falls back to plotting Economy vs. **Total Balls Bowled**. This ensures the visual ranking of bowler efficiency remains functional regardless of data sparsity.
+    *   *Adaptation:* The dashboard filters out any batsman who hasn't faced a minimum threshold of deliveries (`balls_faced > 50` for the chart; `>= 200` for the leaderboard below). This prevents undefined math errors and removes noise, ensuring we only rank established players.
 
-### Derived Leaderboard (from `recently_played_30_male_json`)
-Based on the adaptations above, the pipeline extracted the following actual top performers across all seasons recorded in the JSON dataset:
+*   **Bowlers (Missing Bowling Averages & Unrecorded Dismissals):** The standard Bowling Average (`runs_conceded / wickets`) is undefined when a bowler takes 0 wickets in a spell, or when the `wickets` key is absent in certain JSON logs.
+    *   *Adaptation:* We use **Economy Rate** (`runs_conceded / overs_bowled`) plotted against **Total Wickets** as the primary axes. If `wickets` data is entirely absent in a corrupted dataset, the application dynamically falls back to plotting Economy vs. **Total Balls Bowled**, keeping the bowler analysis functional under any data quality condition.
 
-**Top 5 Batsmen (Ranked by Total Runs):**
-1. **BM Duckett**: 477 Runs (Strike Rate: 69.4)
-2. **JM Clarke**: 461 Runs (Strike Rate: 53.8)
-3. **EN Gay**: 408 Runs (Strike Rate: 64.9)
-4. **TB Abell**: 398 Runs (Strike Rate: 48.2)
-5. **B Sai Sudharsan**: 388 Runs (Strike Rate: 152.2)
+### Leaderboard (from full IPL Cricsheet dataset, 2007–2026)
 
-**Top 5 Bowlers (Ranked by Total Wickets):**
-1. **BA Raine**: 21 Wickets (Economy: 2.23)
-2. **S Lamichhane**: 18 Wickets (Economy: 3.22)
-3. **B Kumar**: 18 Wickets (Economy: 6.71)
-4. **BW Sanderson**: 17 Wickets (Economy: 2.84)
-5. **L Gregory**: 17 Wickets (Economy: 3.11)
+**Top 10 Batsmen (min. 200 balls faced, ranked by Total Runs):**
+
+| Rank | Batsman | Total Runs | Balls Faced | Strike Rate |
+|------|---------|-----------|-------------|-------------|
+| 1 | V Kohli | 9,213 | 7,048 | 130.7 |
+| 2 | RG Sharma | 7,331 | 5,655 | 129.6 |
+| 3 | S Dhawan | 6,769 | 5,483 | 123.5 |
+| 4 | DA Warner | 6,567 | 4,849 | 135.4 |
+| 5 | KL Rahul | 5,768 | 4,270 | 135.1 |
+| 6 | SK Raina | 5,536 | 4,177 | 132.5 |
+| 7 | MS Dhoni | 5,439 | 4,101 | 132.6 |
+| 8 | AM Rahane | 5,304 | 4,350 | 121.9 |
+| 9 | AB de Villiers | 5,181 | 3,487 | 148.6 |
+| 10 | SV Samson | 5,181 | 3,770 | 137.4 |
+
+**Top 10 Bowlers (min. 40 overs bowled, ranked by Total Wickets):**
+
+| Rank | Bowler | Wickets | Economy | Overs |
+|------|--------|---------|---------|-------|
+| 1 | YS Chahal | 240 | 7.93 | 690.5 |
+| 2 | B Kumar | 239 | 7.59 | 782.3 |
+| 3 | SP Narine | 228 | 6.81 | 784.3 |
+| 4 | JJ Bumrah | 208 | 7.25 | 632.0 |
+| 5 | DJ Bravo | 207 | 8.08 | 549.3 |
+| 6 | R Ashwin | 205 | 7.05 | 811.3 |
+| 7 | PP Chawla | 201 | 7.98 | 649.2 |
+| 8 | SL Malinga | 188 | 7.03 | 495.7 |
+| 9 | RA Jadeja | 187 | 7.63 | 714.2 |
+| 10 | Rashid Khan | 185 | 7.29 | 588.5 |
 
 ## 6. Key Analytical Observations
 

@@ -1,66 +1,102 @@
 # IPL Analytics Dashboard 🏏
 
-An end-to-end, production-ready full-stack analytics engine built for exploring cricket match datasets. It provides rich visualizations, fast analytical querying, and a robust data ingestion pipeline capable of handling malformed or "dirty" data seamlessly.
+An end-to-end, fault-tolerant analytics dashboard for the Indian Premier League built on the official [Cricsheet](https://cricsheet.org/) IPL dataset. The pipeline ingests 1,235 real match JSON files, transforms them into clean tabular data, and serves 6 interactive visualizations via Streamlit.
+
+---
 
 ## 🌟 Features
-- **Robust Data Pipeline**: Ingests JSON files, gracefully skipping malformed data using error handling strategies, ensuring no application crashes.
-- **FastAPI Backend**: Uses Pandas and SQLite to aggregate and serve fast analytics on demand.
-- **Glassmorphism UI**: A premium, visually stunning React frontend powered by Recharts, offering dark mode aesthetics with seamless animations and responsiveness.
-- **Interactive Analytics**: Drill-down on stats, win rates, toss impacts, top players, and venue performance based on specific seasons.
+
+- **Real Cricsheet Data** — 1,235 IPL matches (2007–2026), 293,764 ball-by-ball deliveries, 18 seasons, 19 teams
+- **Fault-Tolerant JSON Pipeline** — handles malformed JSON, missing fields, type errors, and empty files without crashing
+- **Schema-Agnostic Design** — no hardcoded team/player/venue names; all entities extracted dynamically
+- **6 Interactive Visualizations** — win rates, toss impact, venue heatmap, batsman scatter, bowler scatter, seasonal trends
+- **Global Filters** — sidebar filters for Season, Team, and Venue update all charts reactively
+
+---
+
+## 📊 Dataset
+
+| Property | Value |
+|---|---|
+| **Source** | [Cricsheet IPL JSON](https://cricsheet.org/downloads/) — `ipl_male_json.zip` |
+| **Format** | Cricsheet JSON (one file per match) |
+| **Matches** | 1,235 |
+| **Deliveries** | 293,764 |
+| **Seasons** | 2007–2026 (18 seasons) |
+| **Teams** | 19 (incl. defunct franchises: Deccan Chargers, Kochi Tuskers, Pune Warriors) |
+| **Wickets recorded** | 14,601 |
+
+> The zip file is not committed to this repository due to its size (~89 MB).
+> Download it from https://cricsheet.org/downloads/ and run `python ingest_json.py` to regenerate the CSVs.
+
+---
 
 ## 🛠 Tech Stack
-- **Backend**: Python 3.12, FastAPI, Pandas, SQLite
-- **Frontend**: React, Vite, Recharts, Lucide React
-- **Architecture**: In-memory/SQLite persistence for rapid access, decoupled API & frontend.
 
-## 🛡️ Fault Tolerance & Dirty Data Handling
-To ensure the analytics engine never crashes during ingestion and prevents silent data corruption, the pipeline employs strict defensive programming:
-1. **Row-Level Error Boundary (`try-except`)**: Instead of wrapping whole files, individual ball-by-ball deliveries are wrapped in exception blocks. If a single faulty row is encountered (e.g., malformed player names or missing objects), the specific error is logged and only that row is skipped, retaining the rest of the perfectly valid match data.
-2. **Safe Dictionary Retrieval**: Using Python's `.get('key', default)` method guarantees that completely missing records (e.g. an abandoned match without a winner) gracefully fall back to values like `"Unknown"` instead of throwing fatal `KeyError` exceptions.
-3. **Explicit Type Verification**: Nested dictionaries are type-checked before parsing (`if not isinstance(runs, dict)`) to thwart `AttributeError` crashes in case corrupted JSON arrays appear where dictionaries are expected.
-4. **File-Level Validation**: Entirely broken JSON files are caught via `json.JSONDecodeError` at load time and immediately bypassed, ensuring the ingestion server continues running uninterrupted.
+| Layer | Technology |
+|---|---|
+| Dashboard | Python 3.8+, Streamlit |
+| Visualizations | Plotly (interactive charts) |
+| Data Processing | Pandas, NumPy |
+| Ingestion Pipeline | Python `zipfile`, `json`, `logging` |
 
-## 🚀 Setup Instructions
+---
 
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- npm or yarn
+## 🛡️ Fault Tolerance
 
-### Data Placement
-1. Download the IPL/Cricsheet JSON dataset.
-2. Create a folder named `data` in the root of this project (or place it wherever you prefer).
-3. Extract all `.json` match files into that folder.
+| Scenario | Handling |
+|---|---|
+| Missing JSON file | Logged, skipped — pipeline continues |
+| Invalid JSON (decode error) | Caught via `json.JSONDecodeError`, file skipped |
+| Missing `winner` / outcome fields | Defaults to `"No Result"` via `.get()` |
+| Missing `is_wicket` / wickets data | Dashboard falls back to plotting balls bowled |
+| Malformed numeric fields | `pd.to_numeric(errors='coerce').fillna(0)` |
+| Fully NaN rows | Dropped via `dropna(how='all')` |
+| Division-by-zero (strike rate) | Players with `balls_faced < 50` filtered out |
 
-### 1. Backend Setup
-Navigate to the root directory and set up the Python environment:
+---
+
+## 🚀 Setup & Run
+
+### 1. Install dependencies
 ```bash
-# Create a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install fastapi uvicorn pandas sqlalchemy
-
-# Run the backend (it will automatically parse the dataset and create the SQLite DB)
-cd backend
-export DATA_DIR="../data" # Set this to the absolute path if stored elsewhere
-uvicorn main:app --reload --port 8000
+pip install -r requirements.txt
 ```
-*The API will be available at http://localhost:8000. You can view the API documentation at http://localhost:8000/docs.*
 
-### 2. Frontend Setup
-In a new terminal window, start the React application:
+### 2. Generate clean data from Cricsheet JSON
 ```bash
-cd frontend
-
-# Install Node dependencies
-npm install
-
-# Start the Vite development server
-npm run dev
+# Download ipl_male_json.zip from https://cricsheet.org/downloads/
+# Then run:
+python ingest_json.py ipl_male_json.zip
 ```
-*The app will be available at http://localhost:5173.*
+This creates `cleaned_matches.csv` and `cleaned_deliveries.csv`.
+
+> **Skip this step** — pre-built CSVs from the real Cricsheet dataset are already committed to this repo.
+
+### 3. Launch the dashboard
+```bash
+streamlit run app.py
+```
+Open **http://localhost:8501** in your browser.
+
+---
+
+## 📁 Project Structure
+
+```
+Cricket-dashboard-analysis/
+├── app.py                  # Streamlit dashboard (6 charts + KPI cards)
+├── ingest_json.py          # Fault-tolerant JSON → CSV pipeline
+├── pipeline.py             # CSV cleaning & validation pipeline
+├── cleaned_matches.csv     # 1,235 real IPL matches (2007–2026)
+├── cleaned_deliveries.csv  # 293,764 real ball-by-ball deliveries
+├── requirements.txt        # Python dependencies
+├── REPORT.md               # Design decisions, adaptations & observations
+└── README.md
+```
+
+---
 
 ## 📜 License
-This project is open-sourced under the MIT License. See `LICENSE` for more details.
+
+This project is open-sourced under the MIT License. See `LICENSE` for details.
