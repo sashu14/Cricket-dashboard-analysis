@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Activity, Trophy, Crosshair, MapPin } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = '/api';
 
 const COLORS = ['#8a2be2', '#ff006e', '#3a86ff', '#06d6a0', '#ffd166', '#ef476f', '#118ab2', '#073b4c'];
 
